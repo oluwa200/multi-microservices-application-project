@@ -1,0 +1,115 @@
+def COLOR_MAP = [
+    'SUCCESS': 'good', 
+    'FAILURE': 'danger',
+    'UNSTABLE': 'danger'
+]
+pipeline {
+    agent any
+    environment {
+        PROJECT_ID = 'xenon-axe-407902'
+        CLUSTER_NAME = 'gke-cluster'
+        LOCATION = 'us-central1-c'
+        CREDENTIALS_ID = 'GKE-SA-Cluster-Credential'
+    }
+    stages {
+        // Checkout To The Service Branch
+        stage('Checkout To Mcroservice Branch'){
+            steps{
+                git branch: 'app-database', url: 'https://github.com/awanmbandi/realworld-microservice-project.git'
+            }
+        }
+        stage('Deploy to GKE') {
+            steps{
+                step([
+                    $class: 'KubernetesEngineBuilder',
+                    projectId: env.PROJECT_ID,
+                    clusterName: env.CLUSTER_NAME,
+                    location: env.LOCATION,
+                    manifestPattern: 'deploy-envs/test-env/test-namespace.yaml',
+                    credentialsId: env.CREDENTIALS_ID,
+                    verifyDeployments: true
+                ])
+            }
+        }
+        // stage('Deploy Dev DB Deployment') {
+        //     steps{
+        //         step([
+        //             $class: 'KubernetesEngineBuilder',
+        //             projectId: env.PROJECT_ID,
+        //             clusterName: env.CLUSTER_NAME,
+        //             location: env.LOCATION,
+        //             manifestPattern: 'deploy-envs/test-env/deployment.yaml',
+        //             credentialsId: env.CREDENTIALS_ID,
+        //             verifyDeployments: true
+        //         ])
+        //     }
+        // }
+        // stage('Deploy Dev DB Service') {
+        //     steps{
+        //         step([
+        //             $class: 'KubernetesEngineBuilder',
+        //             projectId: env.PROJECT_ID,
+        //             clusterName: env.CLUSTER_NAME,
+        //             location: env.LOCATION,
+        //             manifestPattern: 'deploy-envs/test-env/service.yaml',
+        //             credentialsId: env.CREDENTIALS_ID,
+        //             verifyDeployments: true
+        //         ])
+        //     }
+        // }
+        // // Production Deployment Approval
+        // stage('Approve Prod Deployment') {
+        //     steps {
+        //             input('Do you want to proceed?')
+        //     }
+        // }
+        // // // Deploy to The Production Environment
+        // stage('Deploy Prod DB Namespace') {
+        //     steps{
+        //         step([
+        //             $class: 'KubernetesEngineBuilder',
+        //             projectId: env.PROJECT_ID,
+        //             clusterName: env.CLUSTER_NAME,
+        //             location: env.LOCATION,
+        //             manifestPattern: 'deploy-envs/prod-env/prod-namespace.yaml,deployment.yaml,service.yaml',
+        //             credentialsId: env.CREDENTIALS_ID,
+        //             verifyDeployments: true
+        //         ])
+        //     }
+        // }
+        // stage('Deploy Prod DB Deployment') {
+        //     steps{
+        //         step([
+        //             $class: 'KubernetesEngineBuilder',
+        //             projectId: env.PROJECT_ID,
+        //             clusterName: env.CLUSTER_NAME,
+        //             location: env.LOCATION,
+        //             manifestPattern: 'deploy-envs/prod-env/deployment.yaml',
+        //             credentialsId: env.CREDENTIALS_ID,
+        //             verifyDeployments: true
+        //         ])
+        //     }
+        // }
+        // stage('Deploy Prod DB Service') {
+        //     steps{
+        //         step([
+        //             $class: 'KubernetesEngineBuilder',
+        //             projectId: env.PROJECT_ID,
+        //             clusterName: env.CLUSTER_NAME,
+        //             location: env.LOCATION,
+        //             manifestPattern: 'deploy-envs/prod-env/service.yaml',
+        //             credentialsId: env.CREDENTIALS_ID,
+        //             verifyDeployments: true
+        //         ])
+        //     }
+        // }
+    }
+    post {
+    always {
+        echo 'Slack Notifications.'
+        slackSend channel: '#devops', //update and provide your channel name
+        color: COLOR_MAP[currentBuild.currentResult],
+        message: "*${currentBuild.currentResult}:* Job Name '${env.JOB_NAME}' build ${env.BUILD_NUMBER} \n Build Timestamp: ${env.BUILD_TIMESTAMP} \n Project Workspace: ${env.WORKSPACE} \n More info at: ${env.BUILD_URL}"
+    }
+  }
+}
