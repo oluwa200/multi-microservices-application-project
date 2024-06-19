@@ -59,15 +59,15 @@ pipeline {
             }
         }
         // Push Service Image to DockerHub
-        stage('Push Microservice Docker Image') {
-            steps {
-                script {
-                    withDockerRegistry(credentialsId: 'DockerHub-Credential', toolName: 'docker') {
-                        sh "docker push oluwachei/frontendservice:latest "
-                    }
-                }
-            }
-        }
+        // stage('Push Microservice Docker Image') {
+        //     steps {
+        //         script {
+        //             withDockerRegistry(credentialsId: 'DockerHub-Credential', toolName: 'docker') {
+        //                 sh "docker push oluwachei/frontendservice:latest "
+        //             }
+        //         }
+        //     }
+        // }
         // // Deploy to The Staging/Test Environment
         // stage('Deploy Microservice To The Stage/Test Env'){
         //     steps{
